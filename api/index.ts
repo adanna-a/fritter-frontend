@@ -10,6 +10,9 @@ import * as userValidator from '../server/user/middleware';
 import {userRouter} from '../server/user/router';
 import {freetRouter} from '../server/freet/router';
 import MongoStore from 'connect-mongo';
+import { likeRouter } from '../server/like/router';
+import { followeeRouter } from '../server/followee/router';
+import { commentRouter } from '../server/comment/router';
 
 // Load environmental variables
 dotenv.config({});
@@ -70,6 +73,9 @@ app.use(userValidator.isCurrentSessionUserExists);
 // Add routers from routes folder
 app.use('/api/users', userRouter);
 app.use('/api/freets', freetRouter);
+app.use('/api/likes', likeRouter);
+app.use('/api/followees', followeeRouter);
+app.use('/api/comments', commentRouter);
 
 // Catch all the other routes and display error message
 app.all('*', (req: Request, res: Response) => {

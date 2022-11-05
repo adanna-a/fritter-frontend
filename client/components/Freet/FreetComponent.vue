@@ -52,6 +52,17 @@
       Posted at {{ freet.dateModified }}
       <i v-if="freet.edited">(edited)</i>
     </p>
+    <p class="info">
+      Likes at {{ freet.dateModified }}
+      <i v-if="freet.edited">(edited)</i>
+    </p>
+    <button @click="likeFreet">
+      ❤️ Like
+    </button>
+    <button @click="unlikeFreet">
+      💔 Unlike
+    </button>
+    <GetCommentsForm/>
     <section class="alerts">
       <article
         v-for="(status, alert, index) in alerts"
@@ -108,7 +119,7 @@ export default {
           });
         }
       };
-      this.request(params);
+      this.freet_request(params);
     },
     submitEdit() {
       /**
@@ -130,9 +141,51 @@ export default {
           setTimeout(() => this.$delete(this.alerts, params.message), 3000);
         }
       };
-      this.request(params);
+      this.freet_request(params);
     },
-    async request(params) {
+    likeFreet() {
+      /**
+       * Likes this freet
+       */
+      const params = {
+        method: 'POST',
+        body: JSON.stringify({freetId: this.freet._id}),
+        callback: () => {
+          this.$store.commit('alert', {
+            message: 'Successfully liked freet!', status: 'success'
+          });
+        }
+      };
+      this.like_request(params);
+    },
+    unlikeFreet() {
+      /**
+       * Likes this freet
+       */
+      const params = {
+        method: 'DELETE',
+        callback: () => {
+          this.$store.commit('alert', {
+            message: 'Successfully unliked freet!', status: 'success'
+          });
+        }
+      };
+      this.like_request(params);
+    },
+    getNumLikes() {
+      /**
+       * Get the number of likes for the freet
+       */
+      const params = {
+        method: 'GET',
+        callback: () => {
+          this.$store.commit('alert', {
+            message: 'Successfully retrieved number of likes for this freet!', status: 'success'
+          });
+        }
+      };
+    },  
+    async freet_request(params) {
       /**
        * Submits a request to the freet's endpoint
        * @param params - Options for the request
@@ -157,6 +210,52 @@ export default {
         this.$store.commit('refreshFreets');
 
         params.callback();
+      } catch (e) {
+        this.$set(this.alerts, e, 'error');
+        setTimeout(() => this.$delete(this.alerts, e), 3000);
+      }
+    },
+    async like_request(params) {
+      /**
+       * Submits a request to the like's endpoint
+       * @param params - Options for the request
+       * @param params.body - Body for the request, if it exists
+       * @param params.callback - Function to run if the the request succeeds
+       */
+      const options = {
+        method: params.method, headers: {'Content-Type': 'application/json'}
+      };
+    
+      try {
+        if (options.method == 'POST') {
+          const r = await fetch(`/api/likes`, options);
+          if (!r.ok) {
+            const res = await r.json();
+            console.log("RES", res);
+            throw new Error(res.error);
+          }
+          this.editing = false;
+          this.$store.commit('refreshFreets');
+          params.callback();
+        } else if (options.method == 'DELETE') {
+          const r = await fetch(`/api/likes/${this.freet._id}`, options);
+          if (!r.ok) {
+            const res = await r.json();
+            throw new Error(res.error);
+          }
+          this.editing = false;
+          this.$store.commit('refreshFreets');
+          params.callback();
+        } else if (options.method == 'GET') {
+          const r = await fetch(`/api/likes/freetId=${this.freet._id}`, options);
+          if (!r.ok) {
+            const res = await r.json();
+            throw new Error(res.error);
+          }
+          this.editing = false;
+          this.$store.commit('refreshFreets');
+          params.callback();
+        }
       } catch (e) {
         this.$set(this.alerts, e, 'error');
         setTimeout(() => this.$delete(this.alerts, e), 3000);
